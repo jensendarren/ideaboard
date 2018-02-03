@@ -1,21 +1,49 @@
 import React, { Component } from 'react'
 import axios from 'axios'
 import Idea from './Idea'
+import IdeaForm from './IdeaForm'
+import update from 'immutability-helper'
 
 class IdeasContainer extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      ideas: []
+      ideas: [],
+      editingIdeaId: null,
+      notification: ''
     }
   }
 
   renderIdeas() {
     let ideas = []
-    this.state.ideas.map((idea) => {
-      ideas.push(<Idea key={idea.id} idea={idea} />)
-    })
+    {this.state.ideas.map((idea) => {
+      if(this.state.editingIdeaId === idea.id) {
+        ideas.push(<IdeaForm idea={idea} key={idea.id} updateIdea={this.updateIdea} resetNotification={this.resetNotification} titleRef= {input => this.title = input} />)
+      } else {
+        ideas.push(<Idea idea={idea} key={idea.id} onClick={this.enableEditing} onDelete={this.deleteIdea} />)
+      }
+    })}    
     return ideas;
+  }
+
+  updateIdea = (idea) => {
+    const ideaIndex = this.state.ideas.findIndex(x => x.id === idea.id)
+    const ideas = update(this.state.ideas, {
+      [ideaIndex]: { $set: idea }
+    })
+    this.setState({
+      ideas: ideas,
+      notification: 'All changes saved'
+    })
+  }
+
+  resetNotification = () => {
+    this.setState({notification: ''})
+  }
+
+  enableEditing = (id) => {
+    this.setState({editingIdeaId: id},
+      () => { this.title.focus() })
   }
   
   componentDidMount(){
@@ -37,7 +65,23 @@ class IdeasContainer extends Component {
       }
     )
     .then(response => {
-      console.log(response)
+      const ideas = update(this.state.ideas, {
+        $splice: [[0, 0, response.data]]
+      })
+      this.setState({
+        ideas: ideas,
+        editingIdeaId: response.data.id
+      }, () => { this.title.focus() })
+    })
+    .catch(error => console.log(error))
+  }
+
+  deleteIdea = (id) => {
+    axios.delete(`http://localhost/api/v1/ideas/${id}`)
+    .then(response => {
+      const ideaIndex = this.state.ideas.findIndex(x => x.id === id)
+      const ideas = update(this.state.ideas, { $splice: [[ideaIndex, 1]]})
+      this.setState({ideas: ideas})
     })
     .catch(error => console.log(error))
   }
@@ -49,6 +93,9 @@ class IdeasContainer extends Component {
           <button className="newIdeaButton" onClick={this.addNewIdea}>
             New Idea
           </button>
+          <span className="notification">
+            {this.state.notification}
+          </span>
         </div>
         <div>
           {this.renderIdeas()}

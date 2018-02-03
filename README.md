@@ -2,7 +2,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 To run the app using docker-compose:
 
-`dc up`
+`docker-compose up`
 
 To shell into the *running container*:
 

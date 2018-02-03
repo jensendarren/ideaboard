@@ -5,27 +5,54 @@ import Idea from './Idea'
 class IdeasContainer extends Component {
   constructor(props) {
     super(props)
-    console.log("Dadouland FTW")
     this.state = {
       ideas: []
     }
   }
+
+  renderIdeas() {
+    let ideas = []
+    this.state.ideas.map((idea) => {
+      ideas.push(<Idea key={idea.id} idea={idea} />)
+    })
+    return ideas;
+  }
   
-  componentDidMount() {
+  componentDidMount(){
     axios.get('http://localhost/api/v1/ideas.json')
     .then(response => {
-      console.log("Our ideas: ", response.data)
       this.setState({ideas: response.data})
     })
     .catch(error => console.log(error))
-  }  
+  }
+  
+  addNewIdea = () => {
+    axios.post(
+      'http://localhost/api/v1/ideas',
+      { idea:
+        {
+          title: '',
+          body: ''
+        }
+      }
+    )
+    .then(response => {
+      console.log(response)
+    })
+    .catch(error => console.log(error))
+  }
   
   render() {
     return (
       <div>
-        {this.state.ideas.map((idea) => {
-          return (<Idea idea={idea} key={idea.id} />)
-        })}
+        <div>
+          <button className="newIdeaButton" onClick={this.addNewIdea}>
+            New Idea
+          </button>
+        </div>
+        <div>
+          {this.renderIdeas()}
+        </div>
       </div>
     );
   }
